@@ -1,4 +1,4 @@
-//Replaces a variable name in comments with a new name.
+//Replaces a variable name with a new name in the comments of the current selection.
 //@author Russ Goetz
 //@category Personal
 //@keybinding
@@ -39,6 +39,8 @@ public class ReplaceNameInComments extends GhidraScript {
 		//runTests();
 		//return;
 		
+		listing = currentProgram.getListing();
+		
 		if (currentSelection == null) {
 			JOptionPane.showMessageDialog(
 					null,
@@ -50,15 +52,7 @@ public class ReplaceNameInComments extends GhidraScript {
 		}
 		
 		String oldName = getVariableName("Variable Name To Replace", "Enter variable name to replace:");
-		if (oldName == null) {
-			return;
-		}
 		String newName = getVariableName("New Variable Name", "Enter new variable name:");
-		if (newName == null) {
-			return;
-		}
-		
-		listing = currentProgram.getListing();
 		
 		AddressIterator selectionAddrIter = currentSelection.getAddresses(true);
 		while (selectionAddrIter.hasNext()) {
