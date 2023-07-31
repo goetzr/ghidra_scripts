@@ -1,7 +1,7 @@
-//Replaces a variable name with a new name in the comments of the current selection.
+//Renames a variable name in the comments of the current selection.
 //@author Russ Goetz
-//@category Personal
-//@keybinding
+//@category Comments
+//@keybinding ctrl alt F1
 //@menupath
 //@toolbar
 
@@ -23,11 +23,11 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class ReplaceNameInComments extends GhidraScript {
+public class RenameVariableInComments extends GhidraScript {
 
 	private static final String INVALID_VAR_NAME_MSG =
 			"You must enter a valid variable name.\n" +
-			"A valid variable name starts with a letter.\n" +
+			"A valid variable name must start with a letter.\n" +
 			"All remaining characters must be letters, digits, or underscores.";
 	
 	private static final String INVALID_VAR_NAME_TITLE = "Invalid Variable Name";
@@ -44,54 +44,60 @@ public class ReplaceNameInComments extends GhidraScript {
 		if (currentSelection == null) {
 			JOptionPane.showMessageDialog(
 					null,
-					"You must select the area where the replacement should occur.",
+					"You must select the area where the variable rename should occur.",
 					"No Selection",
 			        JOptionPane.ERROR_MESSAGE
 			);
 			return;
 		}
 		
-		String oldName = getVariableName("Variable Name To Replace", "Enter variable name to replace:");
+		String oldName = getVariableName("Variable To Rename", "Enter variable to rename:");
+		if (oldName == null) {
+			return;
+		}
 		String newName = getVariableName("New Variable Name", "Enter new variable name:");
+		if (newName == null) {
+			return;
+		}
 		
 		AddressIterator selectionAddrIter = currentSelection.getAddresses(true);
 		while (selectionAddrIter.hasNext()) {
 			Address addr = selectionAddrIter.next();
-			replaceInComments(addr, oldName, newName);
+			renameVariableInComments(addr, oldName, newName);
 		}
 	}
 	
-	private void replaceInComments(Address addr, String oldName, String newName) {
+	private void renameVariableInComments(Address addr, String oldName, String newName) {
 		// Plate comment.
 		String plateComment = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
 		if (plateComment != null) {
-			plateComment = replaceVariableName(plateComment, oldName, newName);
+			plateComment = renameVariableInText(plateComment, oldName, newName);
 			listing.setComment(addr,  CodeUnit.PLATE_COMMENT, plateComment);
 		}
 		
 		// Pre comment.
 		String preComment = listing.getComment(CodeUnit.PRE_COMMENT, addr);
 		if (preComment != null) {
-			preComment = replaceVariableName(preComment, oldName, newName);
+			preComment = renameVariableInText(preComment, oldName, newName);
 			listing.setComment(addr,  CodeUnit.PRE_COMMENT, preComment);
 		}
 				
 		// EOL comment.
 		String eolComment = listing.getComment(CodeUnit.EOL_COMMENT, addr);
 		if (eolComment != null) {
-			eolComment = replaceVariableName(eolComment, oldName, newName);
+			eolComment = renameVariableInText(eolComment, oldName, newName);
 			listing.setComment(addr,  CodeUnit.EOL_COMMENT, eolComment);
 		}
 		
 		// Post comment.
 		String postComment = listing.getComment(CodeUnit.POST_COMMENT, addr);
 		if (postComment != null) {
-			postComment = replaceVariableName(postComment, oldName, newName);
+			postComment = renameVariableInText(postComment, oldName, newName);
 			listing.setComment(addr,  CodeUnit.POST_COMMENT, postComment);
 		}
 	}
 	
-	private String replaceVariableName(String text, String oldName, String newName) {
+	private String renameVariableInText(String text, String oldName, String newName) {
 		int pos = 0;
 		while (true) {
 			int foundPos = findNextVariableName(text, pos, oldName);
@@ -197,25 +203,25 @@ public class ReplaceNameInComments extends GhidraScript {
 		test_isTrailingVariableNameChar();
 		test_isVariableName();
 		test_findNextVariableName();
-		test_replaceVariableName();
+		test_renameVariableInText();
 	}
 	
-	private void test_replaceVariableName() {
+	private void test_renameVariableInText() {
 		// Found.
-		assertEqual(replaceVariableName("xx", "xx", "yy"), "yy");
-		assertEqual(replaceVariableName("y = 7, xx", "xx", "yy"), "y = 7, yy");
-		assertEqual(replaceVariableName("y = 7, xx = 5, z = 8", "xx", "yy"), "y = 7, yy = 5, z = 8");
-		assertEqual(replaceVariableName("++xx, xx = 5", "xx", "yy"), "++yy, yy = 5");
-		assertEqual(replaceVariableName("zz+xx=7", "xx", "yy"), "zz+yy=7");
-		assertEqual(replaceVariableName("xx = 7\nzz = xx % 2\nwrite(xx)", "xx", "yy"), "yy = 7\nzz = yy % 2\nwrite(yy)");
+		assertEqual(renameVariableInText("xx", "xx", "yy"), "yy");
+		assertEqual(renameVariableInText("y = 7, xx", "xx", "yy"), "y = 7, yy");
+		assertEqual(renameVariableInText("y = 7, xx = 5, z = 8", "xx", "yy"), "y = 7, yy = 5, z = 8");
+		assertEqual(renameVariableInText("++xx, xx = 5", "xx", "yy"), "++yy, yy = 5");
+		assertEqual(renameVariableInText("zz+xx=7", "xx", "yy"), "zz+yy=7");
+		assertEqual(renameVariableInText("xx = 7\nzz = xx % 2\nwrite(xx)", "xx", "yy"), "yy = 7\nzz = yy % 2\nwrite(yy)");
 		
 		// Not found.
-		assertEqual(replaceVariableName("yy = 5", "xx", "yy"), "yy = 5");
-		assertEqual(replaceVariableName("xxx = 5", "xx", "yy"), "xxx = 5");
-		assertEqual(replaceVariableName("yy+xxx=7", "xx", "yy"), "yy+xxx=7");
-		assertEqual(replaceVariableName("yy+xxx", "xx", "yy"), "yy+xxx");
-		assertEqual(replaceVariableName("yy+xx2=7", "xx", "yy"), "yy+xx2=7");
-		assertEqual(replaceVariableName("yy+xx_2=7", "xx", "yy"), "yy+xx_2=7");
+		assertEqual(renameVariableInText("yy = 5", "xx", "yy"), "yy = 5");
+		assertEqual(renameVariableInText("xxx = 5", "xx", "yy"), "xxx = 5");
+		assertEqual(renameVariableInText("yy+xxx=7", "xx", "yy"), "yy+xxx=7");
+		assertEqual(renameVariableInText("yy+xxx", "xx", "yy"), "yy+xxx");
+		assertEqual(renameVariableInText("yy+xx2=7", "xx", "yy"), "yy+xx2=7");
+		assertEqual(renameVariableInText("yy+xx_2=7", "xx", "yy"), "yy+xx_2=7");
 	}
 	
 	private void test_findNextVariableName() {
