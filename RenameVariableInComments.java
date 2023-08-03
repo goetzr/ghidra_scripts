@@ -36,8 +36,8 @@ public class RenameVariableInComments extends GhidraScript {
 	
 	@Override
 	protected void run() throws Exception {
-		//runTests();
-		//return;
+//		runTests();
+//		return;
 		
 		listing = currentProgram.getListing();
 		
@@ -132,27 +132,39 @@ public class RenameVariableInComments extends GhidraScript {
 				return namePos;
 			}
 			
-			// Ensure that name is not a prefix to a longer variable name.
+			// Ensure that name is not a sub-name of a longer variable name.
+			// =============================================================
+			
+			// Ensure that name is not the start of a longer variable name or in the middle of a longer variable name.
 			// If it is, resume searching after the longer variable name.
-			int longerPos = endNamePos;
-			int longerChar = text.charAt(longerPos);
-			while (isTrailingVariableNameChar(longerChar)) {
-				++longerPos;
-				if (longerPos >= text.length()) {
+			int trailingPos = endNamePos;
+			int trailingChar = text.charAt(trailingPos);
+			while (isTrailingVariableNameChar(trailingChar)) {
+				++trailingPos;
+				if (trailingPos >= text.length()) {
 					// The name is a prefix to a longer variable name at the end of the text.
 					return -1;
 				}
-				longerChar = text.charAt(longerPos);
+				trailingChar = text.charAt(trailingPos);
 			}
 			
-			if (longerPos == endNamePos) {
-				// The name is not a prefix to a longer variable name.
-				return namePos;
+			if (trailingPos != endNamePos) {
+				// name is the start of a longer variable name or in the middle of a longer variable name.
+				// Continue searching after the longer variable name.
+				pos = trailingPos;
+				continue;
 			}
 			
-			// The name is a prefix to a longer variable name.
-			// Continue searching after the longer variable name.
-			pos = longerPos;
+			// name is not the start of a longer variable name or in the middle of a longer variable name.
+			// Ensure that name is not the end of a longer variable name.
+			if (namePos > 0 && isTrailingVariableNameChar(text.charAt(namePos - 1))) {
+				// name is the end of a longer variable name.
+				// Continue searching after name.
+				pos = endNamePos;
+				continue;
+			}
+			
+			return namePos;
 		}
 	}
 	
@@ -217,7 +229,9 @@ public class RenameVariableInComments extends GhidraScript {
 		
 		// Not found.
 		assertEqual(renameVariableInText("yy = 5", "xx", "yy"), "yy = 5");
-		assertEqual(renameVariableInText("xxx = 5", "xx", "yy"), "xxx = 5");
+		assertEqual(renameVariableInText("xxy = 5", "xx", "yy"), "xxy = 5");
+		assertEqual(renameVariableInText("zxx = 5", "xx", "yy"), "zxx = 5");
+		assertEqual(renameVariableInText("zxxy = 5", "xx", "yy"), "zxxy = 5");
 		assertEqual(renameVariableInText("yy+xxx=7", "xx", "yy"), "yy+xxx=7");
 		assertEqual(renameVariableInText("yy+xxx", "xx", "yy"), "yy+xxx");
 		assertEqual(renameVariableInText("yy+xx2=7", "xx", "yy"), "yy+xx2=7");
@@ -234,7 +248,9 @@ public class RenameVariableInComments extends GhidraScript {
 		
 		// Not found.
 		assertEqual(findNextVariableName("yy = 5", 0, "xx"), -1);
-		assertEqual(findNextVariableName("xxx = 5", 0, "xx"), -1);
+		assertEqual(findNextVariableName("xxy = 5", 0, "xx"), -1);
+		assertEqual(findNextVariableName("zxx = 5", 0, "xx"), -1);
+		assertEqual(findNextVariableName("zxxy = 5", 0, "xx"), -1);
 		assertEqual(findNextVariableName("yy+xxx=7", 0, "xx"), -1);
 		assertEqual(findNextVariableName("yy+xxx", 0, "xx"), -1);
 		assertEqual(findNextVariableName("yy+xx2=7", 0, "xx"), -1);
