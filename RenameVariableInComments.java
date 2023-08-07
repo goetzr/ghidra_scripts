@@ -27,7 +27,7 @@ public class RenameVariableInComments extends GhidraScript {
 
 	private static final String INVALID_VAR_NAME_MSG =
 			"You must enter a valid variable name.\n" +
-			"A valid variable name must start with a letter.\n" +
+			"A valid variable name must start with a letter or an underscore.\n" +
 			"All remaining characters must be letters, digits, or underscores.";
 	
 	private static final String INVALID_VAR_NAME_TITLE = "Invalid Variable Name";
@@ -191,14 +191,30 @@ public class RenameVariableInComments extends GhidraScript {
 			return false;
 		}
 		
-		// First character must be a letter.
-		int first = str.charAt(0);
-		if (!Character.isLetter(first)) {
+		int index = 0;
+		
+		// First character must be a letter or an underscore.
+		int first = str.charAt(index);
+		if (!Character.isLetter(first) && first != '_') {
 			return false;
+		}
+		++index;
+		
+		// If the first character is an underscore, the second character must be a letter.
+		if (first == '_') {
+			if (str.length() == 1) {
+				// A single '_' is not a valid name.
+				return false;
+			}
+			int second = str.charAt(index);
+			if (!Character.isLetter(second)) {
+				return false;
+			}
+			++index;
 		}
 		
 		// Remaining characters must be letters, digits, or underscores.
-		return str.chars().skip(1).allMatch(c -> isTrailingVariableNameChar(c));
+		return str.chars().skip(index).allMatch(c -> isTrailingVariableNameChar(c));
 	}
 	
 	private boolean isTrailingVariableNameChar(int c) {
@@ -265,15 +281,19 @@ public class RenameVariableInComments extends GhidraScript {
 		assertTrue(isVariableName("x_2"));
 		assertTrue(isVariableName("x_y"));
 		assertTrue(isVariableName("x_2y"));
+		assertTrue(isVariableName("_x"));
+		assertTrue(isVariableName("_x4"));
 		
 		assertFalse(isVariableName("_"));
 		assertFalse(isVariableName("2"));
-		assertFalse(isVariableName("_x"));
 		assertFalse(isVariableName("2x"));
 		assertFalse(isVariableName("x+"));
 		assertFalse(isVariableName("x)"));
 		assertFalse(isVariableName("+x)"));
 		assertFalse(isVariableName("(x)"));
+		assertFalse(isVariableName("_"));
+		assertFalse(isVariableName("_4"));
+		assertFalse(isVariableName("_4x"));
 	}
 	
 	private void test_isTrailingVariableNameChar() {
