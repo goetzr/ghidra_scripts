@@ -5,27 +5,23 @@ class IdentifierUtils {
 			return false;
 		}
 		
+		// Any number of underscores may start.
 		int index = 0;
+		int next = str.charAt(index);
+		while (next == '_') {
+			++index;
+			if (index >= str.length()) {
+				// All underscores is not a valid identifier.
+				return false;
+			}
+			next = str.charAt(index);
+		}
 		
-		// First character must be a letter or an underscore.
-		int first = str.charAt(index);
-		if (!Character.isLetter(first) && first != '_') {
+		// The character immediately following any underscores must be a letter.
+		if (!Character.isLetter(next)) {
 			return false;
 		}
 		++index;
-		
-		// If the first character is an underscore, the second character must be a letter.
-		if (first == '_') {
-			if (str.length() == 1) {
-				// A single '_' is not a valid name.
-				return false;
-			}
-			int second = str.charAt(index);
-			if (!Character.isLetter(second)) {
-				return false;
-			}
-			++index;
-		}
 		
 		// Remaining characters must be letters, digits, or underscores.
 		return str.chars().skip(index).allMatch(c -> isTrailingIdentifierChar(c));
@@ -56,6 +52,8 @@ class IdentifierUtils {
 		assertTrue(isIdentifier("x_2y"));
 		assertTrue(isIdentifier("_x"));
 		assertTrue(isIdentifier("_x4"));
+		assertTrue(isIdentifier("__x4"));
+		assertTrue(isIdentifier("___x4"));
 		
 		assertFalse(isIdentifier("2"));
 		assertFalse(isIdentifier("2x"));
@@ -66,6 +64,7 @@ class IdentifierUtils {
 		assertFalse(isIdentifier("_"));
 		assertFalse(isIdentifier("_4"));
 		assertFalse(isIdentifier("_4x"));
+		assertFalse(isIdentifier("___4x"));
 	}
 	
 	private static void test_isTrailingIdentifierChar() {
