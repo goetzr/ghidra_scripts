@@ -24,7 +24,7 @@ import java.util.*;
 import javax.swing.*;
 
 public class RenameVariableInComments extends RenameIdentifierInComments {
-	
+
 	private String oldName;
 	private String newName;
 
@@ -40,7 +40,7 @@ public class RenameVariableInComments extends RenameIdentifierInComments {
 		}
 		return true;
 	}
-	
+
 	@Override
 	protected String renameInText(String text) {
 		int pos = 0;
@@ -54,17 +54,19 @@ public class RenameVariableInComments extends RenameIdentifierInComments {
 		}
 		return text;
 	}
-	
+
 	/*
-	 * =============================================================================================
+	 * =============================================================================
+	 * ================
 	 * Tests
-	 * =============================================================================================
+	 * =============================================================================
+	 * ================
 	 */
 	@Override
 	protected void runDerivedTests() {
 		test_renameInText();
 	}
-	
+
 	private void test_renameInText() {
 		// Found.
 		oldName = "xx";
@@ -75,7 +77,7 @@ public class RenameVariableInComments extends RenameIdentifierInComments {
 		assertEqual(renameInText("++xx, xx = 5"), "++yy, yy = 5");
 		assertEqual(renameInText("zz+xx=7"), "zz+yy=7");
 		assertEqual(renameInText("xx = 7\nzz = xx % 2\nwrite(xx)"), "yy = 7\nzz = yy % 2\nwrite(yy)");
-		
+
 		// Not found.
 		assertEqual(renameInText("yy = 5"), "yy = 5");
 		assertEqual(renameInText("xxy = 5"), "xxy = 5");
@@ -86,7 +88,7 @@ public class RenameVariableInComments extends RenameIdentifierInComments {
 		assertEqual(renameInText("yy+xx2=7"), "yy+xx2=7");
 		assertEqual(renameInText("yy+xx_2=7"), "yy+xx_2=7");
 	}
-	
+
 	private static void assertEqual(String a, String b) throws AssertionError {
 		if (!a.equals(b)) {
 			throw new AssertionError();
