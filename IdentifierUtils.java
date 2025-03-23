@@ -1,4 +1,4 @@
-class IdentifierUtils {
+class RSG_IdentifierUtils {
 
 	public static boolean isIdentifier(String str) {
 		if (str.isEmpty()) {

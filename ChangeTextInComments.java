@@ -23,7 +23,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class ChangeTextInComments extends GhidraScript {
+public class RSG_ChangeTextInComments extends GhidraScript {
 
     private Listing listing;
 

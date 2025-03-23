@@ -23,7 +23,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class RenameVariableInComments extends RenameIdentifierInComments {
+public class RSG_RenameVariableInComments extends RenameIdentifierInComments {
 
 	private String oldName;
 	private String newName;

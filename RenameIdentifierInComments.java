@@ -18,7 +18,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public abstract class RenameIdentifierInComments extends GhidraScript {
+public abstract class RSG_RenameIdentifierInComments extends GhidraScript {
 
 	protected static final String INVALID_IDENTIFIER_MSG = "You must enter a valid identifier.\n" +
 			"A valid identifier must start with a letter or an underscore.\n" +
