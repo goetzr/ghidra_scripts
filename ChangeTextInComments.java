@@ -20,7 +20,8 @@ import ghidra.program.model.address.*;
 import ghidra.util.exception.*;
 
 import java.util.*;
-import java.util.stream.*;
+
+import javax.swing.*;
 
 public class ChangeTextInComments extends GhidraScript {
 
