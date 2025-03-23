@@ -117,7 +117,7 @@ public abstract class RSG_RenameIdentifierInComments extends GhidraScript {
 			if (endIdPos < text.length()) {
 				int trailingPos = endIdPos;
 				int trailingChar = text.charAt(trailingPos);
-				while (IdentifierUtils.isTrailingIdentifierChar(trailingChar)) {
+				while (RSG_IdentifierUtils.isTrailingIdentifierChar(trailingChar)) {
 					++trailingPos;
 					if (trailingPos >= text.length()) {
 						// id is the start of a longer identifier or in the middle of a
@@ -139,7 +139,7 @@ public abstract class RSG_RenameIdentifierInComments extends GhidraScript {
 			// id is not the start of a longer identifier or in the middle of a longer
 			// identifier.
 			// Ensure that id is not the end of a longer identifier.
-			if (idPos > 0 && IdentifierUtils.isTrailingIdentifierChar(text.charAt(idPos - 1))) {
+			if (idPos > 0 && RSG_IdentifierUtils.isTrailingIdentifierChar(text.charAt(idPos - 1))) {
 				// id is the end of a longer identifier.
 				// Continue searching after id.
 				pos = endIdPos;
@@ -153,7 +153,7 @@ public abstract class RSG_RenameIdentifierInComments extends GhidraScript {
 	protected String getIdentifier(String title, String message) {
 		try {
 			String id = askString(title, message);
-			while (!IdentifierUtils.isIdentifier(id)) {
+			while (!RSG_IdentifierUtils.isIdentifier(id)) {
 				JOptionPane.showMessageDialog(
 						null,
 						INVALID_IDENTIFIER_MSG,
@@ -175,7 +175,7 @@ public abstract class RSG_RenameIdentifierInComments extends GhidraScript {
 	 * ================
 	 */
 	private void runTests() {
-		IdentifierUtils.runTests();
+		RSG_IdentifierUtils.runTests();
 		test_findNextIdentifier();
 		runDerivedTests();
 	}

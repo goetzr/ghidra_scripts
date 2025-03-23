@@ -22,7 +22,7 @@ import ghidra.util.exception.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class RSG_RenameFieldInComments extends RenameIdentifierInComments {
+public class RSG_RenameFieldInComments extends RSG_RenameIdentifierInComments {
 
 	private List<String> varNames;
 	private String oldName;
