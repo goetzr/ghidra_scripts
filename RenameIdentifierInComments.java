@@ -20,123 +20,124 @@ import javax.swing.*;
 
 public abstract class RenameIdentifierInComments extends GhidraScript {
 
-	protected static final String INVALID_IDENTIFIER_MSG =
-			"You must enter a valid identifier.\n" +
+	protected static final String INVALID_IDENTIFIER_MSG = "You must enter a valid identifier.\n" +
 			"A valid identifier must start with a letter or an underscore.\n" +
 			"If it starts with an underscore, the next character must be a letter.\n" +
 			"All remaining characters must be letters, digits, or underscores.";
-	
+
 	protected static final String INVALID_IDENTIFIER_TITLE = "Invalid Identifier";
-	
+
 	protected Listing listing;
-	
+
 	protected abstract boolean promptUserForInfo();
+
 	protected abstract String renameInText(String text);
+
 	protected abstract void runDerivedTests();
-	
+
 	@Override
 	protected void run() throws Exception {
-//		runTests();
-//		return;
-		
+		// runTests();
+		// return;
+
 		listing = currentProgram.getListing();
-		
+
 		if (currentSelection == null) {
 			JOptionPane.showMessageDialog(
 					null,
 					"You must select the area where the rename should occur.",
 					"No Selection",
-			        JOptionPane.ERROR_MESSAGE
-			);
+					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		
+
 		if (!promptUserForInfo()) {
 			return;
 		}
-		
+
 		AddressIterator selectionAddrIter = currentSelection.getAddresses(true);
 		while (selectionAddrIter.hasNext()) {
 			Address addr = selectionAddrIter.next();
 			renameInComments(addr);
 		}
 	}
-	
+
 	private void renameInComments(Address addr) {
 		// Plate comment.
 		String plateComment = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
 		if (plateComment != null) {
 			plateComment = renameInText(plateComment);
-			listing.setComment(addr,  CodeUnit.PLATE_COMMENT, plateComment);
+			listing.setComment(addr, CodeUnit.PLATE_COMMENT, plateComment);
 		}
-		
+
 		// Pre comment.
 		String preComment = listing.getComment(CodeUnit.PRE_COMMENT, addr);
 		if (preComment != null) {
 			preComment = renameInText(preComment);
-			listing.setComment(addr,  CodeUnit.PRE_COMMENT, preComment);
+			listing.setComment(addr, CodeUnit.PRE_COMMENT, preComment);
 		}
-				
+
 		// EOL comment.
 		String eolComment = listing.getComment(CodeUnit.EOL_COMMENT, addr);
 		if (eolComment != null) {
 			eolComment = renameInText(eolComment);
-			listing.setComment(addr,  CodeUnit.EOL_COMMENT, eolComment);
+			listing.setComment(addr, CodeUnit.EOL_COMMENT, eolComment);
 		}
-		
+
 		// Post comment.
 		String postComment = listing.getComment(CodeUnit.POST_COMMENT, addr);
 		if (postComment != null) {
 			postComment = renameInText(postComment);
-			listing.setComment(addr,  CodeUnit.POST_COMMENT, postComment);
+			listing.setComment(addr, CodeUnit.POST_COMMENT, postComment);
 		}
 	}
-	
+
 	protected int findNextIdentifier(String text, int startPos, String id) {
 		int pos = startPos;
-		
+
 		while (true) {
 			if (pos >= text.length()) {
 				// The identifier was not found yet and there's no more text available.
 				return -1;
 			}
-			
+
 			int idPos = text.indexOf(id, pos);
 			if (idPos == -1) {
 				// The identifier was not found.
 				return -1;
 			}
-			
-			int endIdPos = idPos + id.length();
-			if (text.length() == endIdPos) {
-				// The identifier was found at the end of the text.
-				return idPos;
-			}
-			
+
 			// Ensure that id is not a substring of a longer identifier.
 			// =========================================================
-			
-			// Ensure that id is not the start of a longer identifier or in the middle of a longer identifier.
+			int endIdPos = idPos + id.length();
+
+			// Ensure that id is not the start of a longer identifier or in the middle of a
+			// longer identifier.
 			// If it is, resume searching after the longer identifier.
-			int trailingPos = endIdPos;
-			int trailingChar = text.charAt(trailingPos);
-			while (IdentifierUtils.isTrailingIdentifierChar(trailingChar)) {
-				++trailingPos;
-				if (trailingPos >= text.length()) {
-					// id is a prefix to a longer identifier at the end of the text.
-					return -1;
+			if (endIdPos < text.length()) {
+				int trailingPos = endIdPos;
+				int trailingChar = text.charAt(trailingPos);
+				while (IdentifierUtils.isTrailingIdentifierChar(trailingChar)) {
+					++trailingPos;
+					if (trailingPos >= text.length()) {
+						// id is the start of a longer identifier or in the middle of a
+						// longer identifier at the end of the text.
+						return -1;
+					}
+					trailingChar = text.charAt(trailingPos);
 				}
-				trailingChar = text.charAt(trailingPos);
+
+				if (trailingPos != endIdPos) {
+					// id is the start of a longer identifier or in the middle of a longer
+					// identifier.
+					// Continue searching after the longer identifier.
+					pos = trailingPos;
+					continue;
+				}
 			}
-			
-			if (trailingPos != endIdPos) {
-				// id is the start of a longer identifier or in the middle of a longer identifier.
-				// Continue searching after the longer identifier.
-				pos = trailingPos;
-				continue;
-			}
-			
-			// id is not the start of a longer identifier or in the middle of a longer identifier.
+
+			// id is not the start of a longer identifier or in the middle of a longer
+			// identifier.
 			// Ensure that id is not the end of a longer identifier.
 			if (idPos > 0 && IdentifierUtils.isTrailingIdentifierChar(text.charAt(idPos - 1))) {
 				// id is the end of a longer identifier.
@@ -144,21 +145,20 @@ public abstract class RenameIdentifierInComments extends GhidraScript {
 				pos = endIdPos;
 				continue;
 			}
-			
+
 			return idPos;
 		}
 	}
-	
+
 	protected String getIdentifier(String title, String message) {
 		try {
 			String id = askString(title, message);
 			while (!IdentifierUtils.isIdentifier(id)) {
 				JOptionPane.showMessageDialog(
-					null,
-					INVALID_IDENTIFIER_MSG,
-					INVALID_IDENTIFIER_TITLE,
-			        JOptionPane.ERROR_MESSAGE
-				);
+						null,
+						INVALID_IDENTIFIER_MSG,
+						INVALID_IDENTIFIER_TITLE,
+						JOptionPane.ERROR_MESSAGE);
 				id = askString(message, title);
 			}
 			return id;
@@ -166,18 +166,20 @@ public abstract class RenameIdentifierInComments extends GhidraScript {
 			return null;
 		}
 	}
-	
+
 	/*
-	 * =============================================================================================
+	 * =============================================================================
+	 * ================
 	 * Tests
-	 * =============================================================================================
+	 * =============================================================================
+	 * ================
 	 */
 	private void runTests() {
 		IdentifierUtils.runTests();
 		test_findNextIdentifier();
 		runDerivedTests();
 	}
-	
+
 	private void test_findNextIdentifier() {
 		// Found.
 		assertEqual(findNextIdentifier("xx", 0, "xx"), 0);
@@ -185,7 +187,7 @@ public abstract class RenameIdentifierInComments extends GhidraScript {
 		assertEqual(findNextIdentifier("y = 7, xx = 5, z = 8", 0, "xx"), 7);
 		assertEqual(findNextIdentifier("++xx, xx = 5", 4, "xx"), 6);
 		assertEqual(findNextIdentifier("yy+xx=7", 0, "xx"), 3);
-		
+
 		// Not found.
 		assertEqual(findNextIdentifier("yy = 5", 0, "xx"), -1);
 		assertEqual(findNextIdentifier("xxy = 5", 0, "xx"), -1);
@@ -196,7 +198,7 @@ public abstract class RenameIdentifierInComments extends GhidraScript {
 		assertEqual(findNextIdentifier("yy+xx2=7", 0, "xx"), -1);
 		assertEqual(findNextIdentifier("yy+xx_2=7", 0, "xx"), -1);
 	}
-	
+
 	private static void assertEqual(int a, int b) throws AssertionError {
 		if (a != b) {
 			throw new AssertionError();
